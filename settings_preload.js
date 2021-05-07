@@ -7,6 +7,7 @@ const { ipcRenderer, remote } = require('electron');
 
 const url = require('url');
 const i18n = require('./js/modules/i18n');
+const { makeGetter, makeSetter } = require('./preload_utils');
 const {
   getEnvironment,
   setEnvironment,
@@ -97,34 +98,6 @@ window.getLastSyncTime = makeGetter('sync-time');
 window.setLastSyncTime = makeSetter('sync-time');
 
 window.deleteAllData = () => ipcRenderer.send('delete-all-data');
-
-function makeGetter(name) {
-  return () =>
-    new Promise((resolve, reject) => {
-      ipcRenderer.once(`get-success-${name}`, (event, error, value) => {
-        if (error) {
-          return reject(error);
-        }
-
-        return resolve(value);
-      });
-      ipcRenderer.send(`get-${name}`);
-    });
-}
-
-function makeSetter(name) {
-  return value =>
-    new Promise((resolve, reject) => {
-      ipcRenderer.once(`set-success-${name}`, (event, error) => {
-        if (error) {
-          return reject(error);
-        }
-
-        return resolve();
-      });
-      ipcRenderer.send(`set-${name}`, value);
-    });
-}
 
 window.Backbone = require('backbone');
 require('./ts/backbone/views/whisper_view');

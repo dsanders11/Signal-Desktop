@@ -19,7 +19,6 @@ const localeMessages = ipcRenderer.sendSync('locale-data');
 setEnvironment(parseEnvironment(config.environment));
 
 window.getVersion = () => config.version;
-window.theme = config.theme;
 window.i18n = i18n.setup(locale, localeMessages);
 window.copyText = copyText;
 

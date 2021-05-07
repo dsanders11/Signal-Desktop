@@ -22,7 +22,6 @@ setEnvironment(parseEnvironment(config.environment));
 const { nativeTheme } = remote.require('electron');
 
 window.platform = process.platform;
-window.theme = config.theme;
 window.i18n = i18n.setup(locale, localeMessages);
 window.appStartInitialSpellcheckSetting =
   config.appStartInitialSpellcheckSetting === 'true';

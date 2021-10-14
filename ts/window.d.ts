@@ -191,6 +191,7 @@ declare global {
     baseAttachmentsPath: string;
     baseStickersPath: string;
     baseTempPath: string;
+    captchaRequired: () => void;
     drawAttention: () => void;
     enterKeyboardMode: () => void;
     enterMouseMode: () => void;

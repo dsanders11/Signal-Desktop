@@ -321,6 +321,17 @@ async function handleUrl(event: Electron.Event, target: string) {
     return;
   }
 
+  const captchaScheme: string = config.get('captchaScheme');
+  if (target.startsWith(captchaScheme)) {
+    if (captchaWindow) {
+      captchaWindow.close();
+    }
+    const token = target.slice(captchaScheme.length);
+    if (mainWindow) {
+      mainWindow.webContents.send('captcha-response', token);
+    }
+  }
+
   if ((protocol === 'http:' || protocol === 'https:') && !isDevServer) {
     try {
       await shell.openExternal(target);
@@ -1230,6 +1241,53 @@ function showPermissionsPopupWindow(forCalling: boolean, forCamera: boolean) {
     });
   });
 }
+
+let captchaWindow: BrowserWindow | undefined;
+function showCaptchaWindow() {
+  if (captchaWindow) {
+    captchaWindow.show();
+    return;
+  }
+
+  const options = {
+    resizable: false,
+    title: getLocale().i18n('captchaResponseRequired'),
+    autoHideMenuBar: true,
+    show: false,
+    modal: true,
+    webPreferences: {
+      ...defaultWebPrefs,
+      nodeIntegration: false,
+      nodeIntegrationInWorker: false,
+      contextIsolation: false,
+      nativeWindowOpen: true,
+    },
+    parent: mainWindow,
+  };
+
+  captchaWindow = new BrowserWindow(options);
+
+  handleCommonWindowEvents(captchaWindow);
+
+  captchaWindow.loadURL(prepareUrl(new URL(config.get('captchaUrl'))));
+
+  captchaWindow.on('closed', () => {
+    removeDarkOverlay();
+    captchaWindow = undefined;
+  });
+
+  captchaWindow.once('ready-to-show', () => {
+    if (captchaWindow) {
+      addDarkOverlay();
+      captchaWindow.show();
+    }
+  });
+}
+
+// IPC call to load CAPTCHA
+ipc.on('captcha-required', () => {
+  showCaptchaWindow();
+});
 
 async function initializeSQL(): Promise<
   { ok: true; error: undefined } | { ok: false; error: Error }

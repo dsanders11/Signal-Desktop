@@ -16,6 +16,13 @@ export const StandaloneRegistrationView = Whisper.View.extend({
 
     this.accountManager = window.getAccountManager();
 
+    this.pendingVoiceVerification = false;
+    this.pendingSMSVerification = false;
+
+    Whisper.events.on('captchaResponse', () => {
+      this.requestPendingVerification();
+    });
+
     this.render();
 
     const number = window.textsecure.storage.user.getNumber();
@@ -83,33 +90,56 @@ export const StandaloneRegistrationView = Whisper.View.extend({
     }
   },
   async requestVoice() {
+    this.pendingVoiceVerification = true;
+    this.pendingSMSVerification = false;
     window.removeSetupMenuItems();
     this.$('#error').hide();
     const number = this.phoneView.validateNumber();
+    const token = window.textsecure.storage.get('captchaToken');
     if (number) {
       this.$('#step2').addClass('in').fadeIn();
       try {
-        await this.accountManager.requestVoiceVerification(number);
+        await this.accountManager.requestVoiceVerification(number, token);
+        this.pendingVoiceVerification = false;
       } catch (err) {
-        this.displayError(err);
+        if (err.code === 402) {
+          window.captchaRequired();
+        } else {
+          this.displayError(err);
+        }
       }
     } else {
       this.$('#number-container').addClass('invalid');
     }
   },
   async requestSMSVerification() {
+    this.pendingSMSVerification = true;
+    this.pendingVoiceVerification = false;
     window.removeSetupMenuItems();
     $('#error').hide();
     const number = this.phoneView.validateNumber();
+    const token = window.textsecure.storage.get('captchaToken');
     if (number) {
       this.$('#step2').addClass('in').fadeIn();
       try {
-        await this.accountManager.requestSMSVerification(number);
+        await this.accountManager.requestSMSVerification(number, token);
+        this.pendingSMSVerification = false;
       } catch (err) {
-        this.displayError(err);
+        if (err.code === 402) {
+          window.captchaRequired();
+        } else {
+          this.displayError(err);
+        }
       }
     } else {
       this.$('#number-container').addClass('invalid');
+    }
+  },
+  async requestPendingVerification() {
+    if (this.pendingVoiceVerification) {
+      await this.requestVoice();
+    } else if (this.pendingSMSVerification) {
+      await this.requestSMSVerification();
     }
   },
 });

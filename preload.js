@@ -133,6 +133,11 @@ try {
   // eslint-disable-next-line no-eval, no-multi-assign
   window.eval = global.eval = () => null;
 
+  window.captchaRequired = () => {
+    log.info('CAPTCHA required');
+    ipc.send('captcha-required');
+  };
+
   window.drawAttention = () => {
     log.info('draw attention');
     ipc.send('draw-attention');
@@ -209,6 +214,11 @@ try {
         conversationId: ourConversation && ourConversation.id,
       },
     });
+  });
+
+  ipc.on('captcha-response', (_event, token) => {
+    window.textsecure.storage.put('captchaToken', token);
+    Whisper.events.trigger('captchaResponse');
   });
 
   ipc.on('set-up-as-new-device', () => {

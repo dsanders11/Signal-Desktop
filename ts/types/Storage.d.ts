@@ -60,6 +60,7 @@ export type StorageAccessType = {
   attachmentMigration_isComplete: boolean;
   attachmentMigration_lastProcessedIndex: number;
   blocked: Array<string>;
+  captchaToken: string;
   defaultConversationColor: DefaultConversationColorType;
   customColors: CustomColorsItemType;
   device_name: string;
